@@ -1,0 +1,17 @@
+.toolchain/
+.gradle/
+.local-signing/
+local.properties
+**/build/
+node_modules/
+output/*.apk
+output/*.idsig
+.DS_Store
+*.keystore
+*.jks
+.env
+.env.*
+!.env.example
+output/
+playwright-report/
+test-results/
