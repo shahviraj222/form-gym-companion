@@ -2,7 +2,7 @@
 
 ## Download and install
 
-1. Open this repository's **Releases** page and download `FORM.apk` from version **v1.2.1** or a newer release. The GitHub source ZIP is not the Android installer.
+1. A public APK release has not been uploaded yet. Follow the [build guide](DEVELOPMENT.md) to produce `output/FORM.apk`. The GitHub source ZIP is not the Android installer.
 2. Download directly on your phone, or transfer the APK using USB or Quick Share.
 3. Open **My Files → Downloads** on your Samsung S23+ and tap `FORM.apk`.
 4. If prompted, allow **Install unknown apps** for the application opening the APK, then install. You can revoke that permission after installation.
@@ -34,7 +34,7 @@ The app retains permission to the selected files, rather than copying them. Movi
 
 ## Updating
 
-Install a newer release over the existing application without uninstalling it. Updates must have the same package name and signing certificate. Official releases in this repository use the project's retained local signing key.
+Install a newer release over the existing application without uninstalling it. Updates must have the same package name and signing certificate. The existing personal builds use the project's retained local signing key.
 
 A self-built APK creates or uses your own local development key. It will not update an APK signed with somebody else's key. Do not uninstall your current app without first exporting any records you want to keep.
 

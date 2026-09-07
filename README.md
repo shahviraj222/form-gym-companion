@@ -12,11 +12,11 @@ Screenshots use sample test data. No user history or music is bundled.
 
 ## Download
 
-Download `FORM.apk` from the [Releases page](https://github.com/shahviraj222/form-gym-companion/releases/latest). To build it yourself, follow the development guide. Build output is written to `output/FORM.apk`; generated APKs are distributed as release assets rather than checked into Git.
+A public APK release has not been uploaded yet. To build `FORM.apk` yourself, follow the [development guide](docs/DEVELOPMENT.md). Build output is written to `output/FORM.apk`; generated APKs are distributed as release assets rather than checked into Git.
 
 ## Install on your Samsung S23+
 
-1. Download `FORM.apk` from the latest GitHub release, or copy your locally built `output/FORM.apk` to your phone.
+1. Build the app using the development guide, then copy `output/FORM.apk` to your phone.
 2. Open the APK in Samsung **My Files → Downloads** (or the folder you copied it to).
 3. If Android asks, allow **Install unknown apps** for My Files, then tap **Install**. You can revoke that permission afterward.
 4. Open **FORM**. The home screen automatically selects the current local day.
