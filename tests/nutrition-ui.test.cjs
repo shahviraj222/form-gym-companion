@@ -1,47 +1,119 @@
-require('node:fs').mkdirSync('output',{recursive:true});
-const {chromium}=require(process.env.FORM_PLAYWRIGHT || 'playwright');
-const assert=require('node:assert/strict');
-(async()=>{
- const browser=await chromium.launch({headless:true,executablePath:process.env.FORM_CHROMIUM || undefined});
- const page=await browser.newPage({viewport:{width:393,height:852},deviceScaleFactor:2});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:4173/');
- await page.locator('[data-action="log"][data-value="calories"]').click();
- await page.locator('#log-value').fill('');await page.locator('[data-action="save-log"]').click();
- assert.match(await page.locator('#log-error').innerText(),/Enter a total/);
- await page.locator('#log-value').fill('700');await page.locator('[data-action="save-log"]').click();
- await page.locator('nav [data-value="nutrition"]').click();
- assert.match(await page.locator('.energy-ring').innerText(),/700/);
- await page.locator('[data-action="add-water"][data-value="0.25"]').click();
- await page.locator('[data-action="add-water"][data-value="0.5"]').click();
- assert.equal(await page.evaluate(()=>daily().water),.75);
- await page.locator('[data-action="undo-water"]').click();assert.equal(await page.evaluate(()=>daily().water),.25);
- await page.locator('.meal-add').click();
- await page.locator('[data-action="save-meal"]').click();assert.match(await page.locator('#meal-error').innerText(),/Enter calories/);
- await page.locator('#meal-name').fill('Besan chilla & curd');await page.locator('#meal-calories').fill('350');await page.locator('#meal-protein').fill('18.5');await page.locator('[data-action="save-meal"]').click();
- assert.equal(await page.locator('.meal-row').count(),1);assert.equal(await page.evaluate(()=>daily().calories),1050);assert.equal(await page.evaluate(()=>daily().protein),18.5);
- await page.reload();await page.locator('nav [data-value="nutrition"]').click();
- assert.equal(await page.locator('.meal-row').count(),1);assert.equal(await page.evaluate(()=>daily().calories),1050);
- await page.locator('.meal-row').click();await page.locator('#meal-calories').fill('400');await page.locator('#meal-protein').fill('22.2');await page.locator('[data-action="save-meal"]').click();
- assert.equal(await page.evaluate(()=>daily().calories),1100);assert.equal(await page.evaluate(()=>daily().protein),22.2);
- await page.locator('[data-action="repeat-meal"]').first().click();
- assert.equal(await page.locator('.meal-row').count(),2);assert.equal(await page.evaluate(()=>daily().calories),1500);
- await page.locator('[data-action="log"][data-value="calories"]').click();await page.locator('#log-value').fill('500');await page.locator('[data-action="save-log"]').click();assert.match(await page.locator('#log-error').innerText(),/already contain/);await page.keyboard.press('Escape');
- await page.waitForTimeout(3600);
- await page.screenshot({path:'output/nutrition-screen.png',fullPage:true});
- await page.screenshot({path:'output/nutrition-preview.png'});
- await page.locator('[data-action="nutrition-tab"][data-value="foods"]').first().click();
- assert.equal(await page.locator('.food-item').count(),15);
- await page.locator('[data-action="food-filter"][data-value="Dairy"]').click();assert.equal(await page.locator('.food-item').count(),4);
- await page.locator('.food-item[data-value="Paneer"]').click();assert.equal(await page.locator('#meal-name').inputValue(),'Paneer');await page.keyboard.press('Escape');
- await page.locator('[data-action="food-filter"][data-value="All"]').click();
- await page.screenshot({path:'output/food-guide-screen.png',fullPage:true});
- await page.locator('[data-action="nutrition-tab"][data-value="history"]').click();assert.equal(await page.locator('.nutrition-history-day').count(),1);
- await page.locator('.nutrition-history-day summary').click();await page.locator('.meal-row').first().click();await page.locator('[data-action="delete-meal"]').click();assert.equal(await page.evaluate(()=>daily().calories),1100);assert.equal(await page.evaluate(()=>daily().protein),22.2);
- await page.locator('[data-action="nutrition-tab"][data-value="today"]').click();
- await page.setViewportSize({width:320,height:740});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- await page.screenshot({path:'output/nutrition-narrow.png',fullPage:true});
- await page.locator('[data-action="nutrition-tab"][data-value="foods"]').first().click();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- assert.deepEqual(errors,[]);console.log('Nutrition UI passed: blank validation, legacy totals, water/undo, add/edit/repeat/remove meals, reload, history, food filters, 320px layout.');
- await browser.close();
-})().catch(e=>{console.error(e);process.exit(1)});
+require("node:fs").mkdirSync("output", { recursive: true });
+const { chromium } = require(process.env.FORM_PLAYWRIGHT || "playwright");
+const assert = require("node:assert/strict");
+(async () => {
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.FORM_CHROMIUM || undefined,
+  });
+  const page = await browser.newPage({
+    viewport: { width: 393, height: 852 },
+    deviceScaleFactor: 2,
+  });
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("http://127.0.0.1:4173/");
+  await page.locator('[data-action="log"][data-value="calories"]').click();
+  await page.locator("#log-value").fill("");
+  await page.locator('[data-action="save-log"]').click();
+  assert.match(await page.locator("#log-error").innerText(), /Enter a total/);
+  await page.locator("#log-value").fill("700");
+  await page.locator('[data-action="save-log"]').click();
+  await page.locator('nav [data-value="nutrition"]').click();
+  assert.match(await page.locator(".energy-ring").innerText(), /700/);
+  await page.locator('[data-action="add-water"][data-value="0.25"]').click();
+  await page.locator('[data-action="add-water"][data-value="0.5"]').click();
+  assert.equal(await page.evaluate(() => daily().water), 0.75);
+  await page.locator('[data-action="undo-water"]').click();
+  assert.equal(await page.evaluate(() => daily().water), 0.25);
+  await page.locator(".meal-add").click();
+  await page.locator('[data-action="save-meal"]').click();
+  assert.match(await page.locator("#meal-error").innerText(), /Enter calories/);
+  await page.locator("#meal-name").fill("Besan chilla & curd");
+  await page.locator("#meal-calories").fill("350");
+  await page.locator("#meal-protein").fill("18.5");
+  await page.locator('[data-action="save-meal"]').click();
+  assert.equal(await page.locator(".meal-row").count(), 1);
+  assert.equal(await page.evaluate(() => daily().calories), 1050);
+  assert.equal(await page.evaluate(() => daily().protein), 18.5);
+  await page.reload();
+  await page.locator('nav [data-value="nutrition"]').click();
+  assert.equal(await page.locator(".meal-row").count(), 1);
+  assert.equal(await page.evaluate(() => daily().calories), 1050);
+  await page.locator(".meal-row").click();
+  await page.locator("#meal-calories").fill("400");
+  await page.locator("#meal-protein").fill("22.2");
+  await page.locator('[data-action="save-meal"]').click();
+  assert.equal(await page.evaluate(() => daily().calories), 1100);
+  assert.equal(await page.evaluate(() => daily().protein), 22.2);
+  await page.locator('[data-action="repeat-meal"]').first().click();
+  assert.equal(await page.locator(".meal-row").count(), 2);
+  assert.equal(await page.evaluate(() => daily().calories), 1500);
+  await page.locator('[data-action="log"][data-value="calories"]').click();
+  await page.locator("#log-value").fill("500");
+  await page.locator('[data-action="save-log"]').click();
+  assert.match(await page.locator("#log-error").innerText(), /already contain/);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(3600);
+  await page.screenshot({
+    path: "output/nutrition-screen.png",
+    fullPage: true,
+  });
+  await page.screenshot({ path: "output/nutrition-preview.png" });
+  await page
+    .locator('[data-action="nutrition-tab"][data-value="foods"]')
+    .first()
+    .click();
+  assert.equal(await page.locator(".food-item").count(), 15);
+  await page.locator('[data-action="food-filter"][data-value="Dairy"]').click();
+  assert.equal(await page.locator(".food-item").count(), 4);
+  await page.locator('.food-item[data-value="Paneer"]').click();
+  assert.equal(await page.locator("#meal-name").inputValue(), "Paneer");
+  await page.keyboard.press("Escape");
+  await page.locator('[data-action="food-filter"][data-value="All"]').click();
+  await page.screenshot({
+    path: "output/food-guide-screen.png",
+    fullPage: true,
+  });
+  await page
+    .locator('[data-action="nutrition-tab"][data-value="history"]')
+    .click();
+  assert.equal(await page.locator(".nutrition-history-day").count(), 1);
+  await page.locator(".nutrition-history-day summary").click();
+  await page.locator(".meal-row").first().click();
+  await page.locator('[data-action="delete-meal"]').click();
+  assert.equal(await page.evaluate(() => daily().calories), 1100);
+  assert.equal(await page.evaluate(() => daily().protein), 22.2);
+  await page
+    .locator('[data-action="nutrition-tab"][data-value="today"]')
+    .click();
+  await page.setViewportSize({ width: 320, height: 740 });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
+  await page.screenshot({
+    path: "output/nutrition-narrow.png",
+    fullPage: true,
+  });
+  await page
+    .locator('[data-action="nutrition-tab"][data-value="foods"]')
+    .first()
+    .click();
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
+  assert.deepEqual(errors, []);
+  console.log(
+    "Nutrition UI passed: blank validation, legacy totals, water/undo, add/edit/repeat/remove meals, reload, history, food filters, 320px layout.",
+  );
+  await browser.close();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

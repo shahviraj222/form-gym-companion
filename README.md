@@ -61,15 +61,15 @@ Keep selected music files available at their original location. Moving/deleting 
 
 Source: the project owner’s supplied “SixPacks Excersice - Google Sheets” PDF. The complete routine is transcribed below; the original personal document is not needed to build or run the app.
 
-| Day | Focus | Exercises |
-| --- | --- | --- |
-| Sunday | Chest + Abs | Push-ups 3 × 12; pike push-ups 3 × 8; chair dips 3 × 10; crunches 3 × 20; leg raises 3 × 12; plank 3 × 40 sec |
-| Monday | Legs + Core | Squats 3 × 20; reverse lunges 3 × 10/leg; glute bridges 3 × 20; wall sit 3 × 40 sec; mountain climbers 3 × 30 sec; side plank 3 × 30 sec/side |
-| Tuesday | Back + Abs | Backpack rows 3 × 15; superman 3 × 15; reverse snow angels 3 × 12; bicycle crunches 3 × 20; leg raises 3 × 12; plank 3 × 45 sec |
-| Wednesday | Recovery | Walking 30–45 min; stretching 10 min |
-| Thursday | Full Body + Abs | Push-ups 3 × 12; squats 3 × 20; backpack rows 3 × 15; lunges 3 × 10/leg; chair dips 3 × 10; leg raises 3 × 15; plank 3 × 45 sec |
-| Friday | Conditioning + Abs | Jumping jacks 4 × 45 sec; high knees 4 × 30 sec; mountain climbers 4 × 30 sec; burpees 4 × 8; crunches 4 × 20; hollow-body hold 3 × 20–30 sec |
-| Saturday | Rest | No workout |
+| Day       | Focus              | Exercises                                                                                                                                     |
+| --------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sunday    | Chest + Abs        | Push-ups 3 × 12; pike push-ups 3 × 8; chair dips 3 × 10; crunches 3 × 20; leg raises 3 × 12; plank 3 × 40 sec                                 |
+| Monday    | Legs + Core        | Squats 3 × 20; reverse lunges 3 × 10/leg; glute bridges 3 × 20; wall sit 3 × 40 sec; mountain climbers 3 × 30 sec; side plank 3 × 30 sec/side |
+| Tuesday   | Back + Abs         | Backpack rows 3 × 15; superman 3 × 15; reverse snow angels 3 × 12; bicycle crunches 3 × 20; leg raises 3 × 12; plank 3 × 45 sec               |
+| Wednesday | Recovery           | Walking 30–45 min; stretching 10 min                                                                                                          |
+| Thursday  | Full Body + Abs    | Push-ups 3 × 12; squats 3 × 20; backpack rows 3 × 15; lunges 3 × 10/leg; chair dips 3 × 10; leg raises 3 × 15; plank 3 × 45 sec               |
+| Friday    | Conditioning + Abs | Jumping jacks 4 × 45 sec; high knees 4 × 30 sec; mountain climbers 4 × 30 sec; burpees 4 × 8; crunches 4 × 20; hollow-body hold 3 × 20–30 sec |
+| Saturday  | Rest               | No workout                                                                                                                                    |
 
 Friday’s PDF heading is clipped to “Conditioning + A”; the app expands it to “Conditioning + Abs”. Recovery walking defaults to 30 minutes and hollow holds to 25 seconds, both adjustable within the supplied ranges in Settings. Rest duration was not specified in the PDF and is adjustable. Rep-based unilateral exercises show reps per leg; you complete both legs before marking the set complete.
 

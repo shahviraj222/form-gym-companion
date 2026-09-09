@@ -4,21 +4,21 @@ FORM is an offline hybrid Android app. Java hosts a WebView and exposes a small 
 
 ## Technologies actually used
 
-| Area | Implementation |
-| --- | --- |
-| Android host | Java Activity; Android framework APIs |
-| Interface | HTML, CSS, plain JavaScript; no React or Vue |
-| Illustrations | Original SVG paths and pose helpers |
-| Workouts | Mutable JavaScript Session state machine |
-| Nutrition | Baseline plus meal/water journal entries |
-| Persistence | JSON in Android SharedPreferences; browser localStorage in preview |
-| Audio | Android MediaPlayer and AudioManager; HTML Audio in preview |
-| File access | ACTION_OPEN_DOCUMENT and persistent URI permission |
-| Native bridge | addJavascriptInterface and evaluateJavascript |
-| Tests | Node node:test/assert, Playwright/Chromium |
-| Build | JDK 17, Android Platform 35, Build Tools 35.0.0, aapt2, d8, zipalign, apksigner |
-| Alternative configuration | AGP 8.7.3 / Gradle 8.9; not the verified release build path |
-| Development tools | Shell, ripgrep, Python, Poppler PDF extraction/rendering, browser screenshots |
+| Area                      | Implementation                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| Android host              | Java Activity; Android framework APIs                                           |
+| Interface                 | HTML, CSS, plain JavaScript; no React or Vue                                    |
+| Illustrations             | Original SVG paths and pose helpers                                             |
+| Workouts                  | Mutable JavaScript Session state machine                                        |
+| Nutrition                 | Baseline plus meal/water journal entries                                        |
+| Persistence               | JSON in Android SharedPreferences; browser localStorage in preview              |
+| Audio                     | Android MediaPlayer and AudioManager; HTML Audio in preview                     |
+| File access               | ACTION_OPEN_DOCUMENT and persistent URI permission                              |
+| Native bridge             | addJavascriptInterface and evaluateJavascript                                   |
+| Tests                     | Node node:test/assert, Playwright/Chromium                                      |
+| Build                     | JDK 17, Android Platform 35, Build Tools 35.0.0, aapt2, d8, zipalign, apksigner |
+| Alternative configuration | AGP 8.7.3 / Gradle 8.9; not the verified release build path                     |
+| Development tools         | Shell, ripgrep, Python, Poppler PDF extraction/rendering, browser screenshots   |
 
 ## Layers
 
@@ -42,14 +42,14 @@ flowchart TD
 
 A Session contains its plan snapshot, current index, phase, active milliseconds, rest milliseconds, current-round milliseconds, remaining rest, and completed round logs.
 
-| Phase | Meaning |
-| --- | --- |
-| work | Exercise time accumulates |
-| rest | Rest time accumulates and its countdown decreases |
-| paused | Work or rest is stopped; beforePause identifies the return state |
-| ready | Rest has ended; explicit user action starts the next round |
-| setDone | Timed exercise reached its target and needs confirmation |
-| finished | All rounds completed |
+| Phase    | Meaning                                                          |
+| -------- | ---------------------------------------------------------------- |
+| work     | Exercise time accumulates                                        |
+| rest     | Rest time accumulates and its countdown decreases                |
+| paused   | Work or rest is stopped; beforePause identifies the return state |
+| ready    | Rest has ended; explicit user action starts the next round       |
+| setDone  | Timed exercise reached its target and needs confirmation         |
+| finished | All rounds completed                                             |
 
 The UI ticks about every 200 ms. Session computes `max(0, now - last)` instead of assuming every callback arrives on time. Timed rounds clamp that delta to their remaining duration. `Date.now()` is currently the clock: a monotonic clock is a documented improvement, because wall-clock adjustments can distort durations.
 

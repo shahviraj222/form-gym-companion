@@ -1,116 +1,187 @@
-require('node:fs').mkdirSync('output',{recursive:true});
-const {chromium}=require(process.env.FORM_PLAYWRIGHT || 'playwright');
-const assert=require('node:assert/strict');
-(async()=>{
- const browser=await chromium.launch({headless:true,executablePath:process.env.FORM_CHROMIUM || undefined});
- const page=await browser.newPage({viewport:{width:393,height:852},deviceScaleFactor:2});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:4173');
- await page.locator('[data-action="day"][data-value="1"]').click();
- await page.screenshot({path:'output/home-screen.png',fullPage:true});
- assert.match(await page.locator('.workout-card').innerText(),/Legs/);
- // Daily logs validate, save and survive a reload.
- await page.locator('[data-action="log"][data-value="water"]').click();
- await page.locator('#log-value').fill('1.5');
- await page.locator('[data-action="save-log"]').click();
- await page.reload();
- assert.match(await page.locator('[data-action="log"][data-value="water"]').innerText(),/1.5/);
- await page.locator('nav [data-action="tab"][data-value="nutrition"]').click();
- assert.match(await page.locator('#app').innerText(),/Good food/);
- await page.screenshot({path:'output/nutrition-screen.png',fullPage:true});
- await page.locator('nav [data-action="tab"][data-value="plan"]').click();
- await page.locator('[data-action="day"][data-value="1"]').click();
- assert.equal(await page.locator('.exercise').count(),6);
- assert.equal(await page.locator('.exercise svg.exercise-illustration').count(),6);
- await page.locator('.exercise[data-value="Squats"]').click();
- assert.equal(await page.locator('#exercise-guide-title').innerText(),'Squats');
- assert.equal(await page.locator('.guide-steps li').count(),3);
- assert.equal(await page.evaluate(()=>session),null);
- await page.screenshot({path:'output/exercise-guide-screen.png',fullPage:true});
- for(let i=0;i<5;i++)await page.keyboard.press('Tab');
- assert.equal(await page.evaluate(()=>document.querySelector('#overlay').contains(document.activeElement)),true);
- await page.locator('[aria-label="Close exercise guide"]').click();
- await page.screenshot({path:'output/plan-screen.png',fullPage:true});
- await page.locator('[data-action="start"]').click();
- assert.equal(await page.locator('.session-title').innerText(),'Squats');
- await page.waitForTimeout(1200);
- assert.equal(await page.locator('.movement-card svg.exercise-illustration').count(),1);
- await page.locator('.movement-card [data-action="exercise-guide"]').click();
- const pausedMs=await page.evaluate(()=>session.activeMs);
- await page.waitForTimeout(400);
- assert.equal(await page.evaluate(()=>session.activeMs),pausedMs);
- assert.equal(await page.evaluate(()=>session.phase),'paused');
- await page.locator('[aria-label="Close exercise guide"]').click();
- assert.equal(await page.locator('#timer-label').innerText(),'PAUSED');
- await page.locator('[data-action="unpause"]').click();
- await page.screenshot({path:'output/workout-screen.png',fullPage:true});
- await page.locator('[data-action="complete"]').click();
- assert.equal(await page.locator('.session-title').innerText(),'Rest & recover');
- await page.locator('.movement-card [data-action="exercise-guide"]').click();
- const restLeft=await page.evaluate(()=>session.restLeft);
- await page.waitForTimeout(350);
- assert.equal(await page.evaluate(()=>session.restLeft),restLeft);
- await page.keyboard.press('Escape');
- assert.equal(await page.evaluate(()=>session.phase),'paused');
- await page.locator('[data-action="unpause"]').click();
- assert.equal(await page.evaluate(()=>session.phase),'rest');
- await page.screenshot({path:'output/rest-screen.png',fullPage:true});
- await page.locator('[data-action="next"]').click();
- assert.match(await page.locator('.session-amount').innerText(),/Set 2 of 3/);
- await page.locator('[data-action="leave-session"]').click();
- await page.reload();
- await page.locator('[data-action="resume-session"]').click();
- assert.equal(await page.locator('#timer-label').innerText(),'PAUSED');
- await page.locator('[data-action="unpause"]').click();
- // Finish all remaining sets, including the two sides of side planks.
- let count=0;
- while(await page.locator('[data-action="complete"]').count()){
-   if(await page.locator('[data-action="complete-no-rest"]').count())await page.locator('[data-action="complete-no-rest"]').click();
-   else await page.locator('[data-action="complete"]').click();
-   if(++count>30)throw Error('Session did not finish');
- }
- assert.match(await page.locator('h1').innerText(),/You showed up/);
- await page.locator('[data-action="done"]').click();
- await page.locator('nav [data-action="tab"][data-value="progress"]').click();
- assert.match(await page.locator('.history-row').innerText(),/Legs \+ Core/);
- await page.locator('.history-row summary').click();
- assert.equal(await page.locator('.history-row li').count(),21);
- await page.screenshot({path:'output/progress-screen.png',fullPage:true});
- // Local audio import, play, rest pause, and resume using a small WAV fixture.
- await page.locator('nav [data-action="tab"][data-value="home"]').click();
- await page.locator('[data-action="music"]').click();
- const samples=8000,buf=Buffer.alloc(44+samples*2);
- buf.write('RIFF',0);buf.writeUInt32LE(buf.length-8,4);buf.write('WAVEfmt ',8);buf.writeUInt32LE(16,16);buf.writeUInt16LE(1,20);buf.writeUInt16LE(1,22);buf.writeUInt32LE(8000,24);buf.writeUInt32LE(16000,28);buf.writeUInt16LE(2,32);buf.writeUInt16LE(16,34);buf.write('data',36);buf.writeUInt32LE(samples*2,40);
- await page.locator('#audio-import').setInputFiles({name:'test-song.wav',mimeType:'audio/wav',buffer:buf});
- assert.equal(await page.locator('.song').count(),1);
- await page.screenshot({path:'output/music-screen.png',fullPage:true});
- await page.locator('[data-action="back"]').click();
- await page.locator('[data-action="day"][data-value="0"]').click();
- await page.locator('[data-action="start"]').click();
- await page.waitForTimeout(100);
- assert.equal(await page.evaluate(()=>audio.paused),false);
- assert.match(await page.locator('#session-song').innerText(),/test-song.wav/);
- await page.locator('.movement-card [data-action="exercise-guide"]').click();
- assert.equal(await page.evaluate(()=>audio.paused),true);
- await page.locator('[aria-label="Close exercise guide"]').click();
- assert.equal(await page.evaluate(()=>audio.paused),true);
- await page.locator('[data-action="unpause"]').click();
- assert.equal(await page.evaluate(()=>audio.paused),false);
- assert.match(await page.locator('#session-song').innerText(),/test-song.wav/);
- await page.locator('[data-action="break"]').click();
- assert.equal(await page.evaluate(()=>audio.paused),true);
- await page.locator('[data-action="next"]').click();
- await page.waitForTimeout(100);
- assert.equal(await page.evaluate(()=>audio.paused),false);
- assert.match(await page.locator('#session-song').innerText(),/test-song.wav/);
- await page.locator('[data-action="end-session"]').click();
- assert.equal(await page.evaluate(()=>audio.paused),true);
- await page.locator('[data-action="save-partial"]').click();
- // Check the layout at narrow width.
- await page.setViewportSize({width:320,height:740});
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- await page.screenshot({path:'output/narrow-screen.png',fullPage:true});
- assert.deepEqual(errors,[]);
- console.log('UI passed: SVG guides pause timers/music and resume explicitly; plan, nutrition persistence, workout/rest/resume, 21-round completion, history, audio play/pause/resume, narrow layout; no JS errors.');
- await browser.close();
-})().catch(e=>{console.error(e);process.exit(1)});
+require("node:fs").mkdirSync("output", { recursive: true });
+const { chromium } = require(process.env.FORM_PLAYWRIGHT || "playwright");
+const assert = require("node:assert/strict");
+(async () => {
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.FORM_CHROMIUM || undefined,
+  });
+  const page = await browser.newPage({
+    viewport: { width: 393, height: 852 },
+    deviceScaleFactor: 2,
+  });
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("http://127.0.0.1:4173");
+  await page.locator('[data-action="day"][data-value="1"]').click();
+  await page.screenshot({ path: "output/home-screen.png", fullPage: true });
+  assert.match(await page.locator(".workout-card").innerText(), /Legs/);
+  // Daily logs validate, save and survive a reload.
+  await page.locator('[data-action="log"][data-value="water"]').click();
+  await page.locator("#log-value").fill("1.5");
+  await page.locator('[data-action="save-log"]').click();
+  await page.reload();
+  assert.match(
+    await page.locator('[data-action="log"][data-value="water"]').innerText(),
+    /1.5/,
+  );
+  await page.locator('nav [data-action="tab"][data-value="nutrition"]').click();
+  assert.match(await page.locator("#app").innerText(), /Good food/);
+  await page.screenshot({
+    path: "output/nutrition-screen.png",
+    fullPage: true,
+  });
+  await page.locator('nav [data-action="tab"][data-value="plan"]').click();
+  await page.locator('[data-action="day"][data-value="1"]').click();
+  assert.equal(await page.locator(".exercise").count(), 6);
+  assert.equal(
+    await page.locator(".exercise svg.exercise-illustration").count(),
+    6,
+  );
+  await page.locator('.exercise[data-value="Squats"]').click();
+  assert.equal(
+    await page.locator("#exercise-guide-title").innerText(),
+    "Squats",
+  );
+  assert.equal(await page.locator(".guide-steps li").count(), 3);
+  assert.equal(await page.evaluate(() => session), null);
+  await page.screenshot({
+    path: "output/exercise-guide-screen.png",
+    fullPage: true,
+  });
+  for (let i = 0; i < 5; i++) await page.keyboard.press("Tab");
+  assert.equal(
+    await page.evaluate(() =>
+      document.querySelector("#overlay").contains(document.activeElement),
+    ),
+    true,
+  );
+  await page.locator('[aria-label="Close exercise guide"]').click();
+  await page.screenshot({ path: "output/plan-screen.png", fullPage: true });
+  await page.locator('[data-action="start"]').click();
+  assert.equal(await page.locator(".session-title").innerText(), "Squats");
+  await page.waitForTimeout(1200);
+  assert.equal(
+    await page.locator(".movement-card svg.exercise-illustration").count(),
+    1,
+  );
+  await page.locator('.movement-card [data-action="exercise-guide"]').click();
+  const pausedMs = await page.evaluate(() => session.activeMs);
+  await page.waitForTimeout(400);
+  assert.equal(await page.evaluate(() => session.activeMs), pausedMs);
+  assert.equal(await page.evaluate(() => session.phase), "paused");
+  await page.locator('[aria-label="Close exercise guide"]').click();
+  assert.equal(await page.locator("#timer-label").innerText(), "PAUSED");
+  await page.locator('[data-action="unpause"]').click();
+  await page.screenshot({ path: "output/workout-screen.png", fullPage: true });
+  await page.locator('[data-action="complete"]').click();
+  assert.equal(
+    await page.locator(".session-title").innerText(),
+    "Rest & recover",
+  );
+  await page.locator('.movement-card [data-action="exercise-guide"]').click();
+  const restLeft = await page.evaluate(() => session.restLeft);
+  await page.waitForTimeout(350);
+  assert.equal(await page.evaluate(() => session.restLeft), restLeft);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.evaluate(() => session.phase), "paused");
+  await page.locator('[data-action="unpause"]').click();
+  assert.equal(await page.evaluate(() => session.phase), "rest");
+  await page.screenshot({ path: "output/rest-screen.png", fullPage: true });
+  await page.locator('[data-action="next"]').click();
+  assert.match(await page.locator(".session-amount").innerText(), /Set 2 of 3/);
+  await page.locator('[data-action="leave-session"]').click();
+  await page.reload();
+  await page.locator('[data-action="resume-session"]').click();
+  assert.equal(await page.locator("#timer-label").innerText(), "PAUSED");
+  await page.locator('[data-action="unpause"]').click();
+  // Finish all remaining sets, including the two sides of side planks.
+  let count = 0;
+  while (await page.locator('[data-action="complete"]').count()) {
+    if (await page.locator('[data-action="complete-no-rest"]').count())
+      await page.locator('[data-action="complete-no-rest"]').click();
+    else await page.locator('[data-action="complete"]').click();
+    if (++count > 30) throw Error("Session did not finish");
+  }
+  assert.match(await page.locator("h1").innerText(), /You showed up/);
+  await page.locator('[data-action="done"]').click();
+  await page.locator('nav [data-action="tab"][data-value="progress"]').click();
+  assert.match(await page.locator(".history-row").innerText(), /Legs \+ Core/);
+  await page.locator(".history-row summary").click();
+  assert.equal(await page.locator(".history-row li").count(), 21);
+  await page.screenshot({ path: "output/progress-screen.png", fullPage: true });
+  // Local audio import, play, rest pause, and resume using a small WAV fixture.
+  await page.locator('nav [data-action="tab"][data-value="home"]').click();
+  await page.locator('[data-action="music"]').click();
+  const samples = 8000,
+    buf = Buffer.alloc(44 + samples * 2);
+  buf.write("RIFF", 0);
+  buf.writeUInt32LE(buf.length - 8, 4);
+  buf.write("WAVEfmt ", 8);
+  buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20);
+  buf.writeUInt16LE(1, 22);
+  buf.writeUInt32LE(8000, 24);
+  buf.writeUInt32LE(16000, 28);
+  buf.writeUInt16LE(2, 32);
+  buf.writeUInt16LE(16, 34);
+  buf.write("data", 36);
+  buf.writeUInt32LE(samples * 2, 40);
+  await page
+    .locator("#audio-import")
+    .setInputFiles({
+      name: "test-song.wav",
+      mimeType: "audio/wav",
+      buffer: buf,
+    });
+  assert.equal(await page.locator(".song").count(), 1);
+  await page.screenshot({ path: "output/music-screen.png", fullPage: true });
+  await page.locator('[data-action="back"]').click();
+  await page.locator('[data-action="day"][data-value="0"]').click();
+  await page.locator('[data-action="start"]').click();
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => audio.paused), false);
+  assert.match(
+    await page.locator("#session-song").innerText(),
+    /test-song.wav/,
+  );
+  await page.locator('.movement-card [data-action="exercise-guide"]').click();
+  assert.equal(await page.evaluate(() => audio.paused), true);
+  await page.locator('[aria-label="Close exercise guide"]').click();
+  assert.equal(await page.evaluate(() => audio.paused), true);
+  await page.locator('[data-action="unpause"]').click();
+  assert.equal(await page.evaluate(() => audio.paused), false);
+  assert.match(
+    await page.locator("#session-song").innerText(),
+    /test-song.wav/,
+  );
+  await page.locator('[data-action="break"]').click();
+  assert.equal(await page.evaluate(() => audio.paused), true);
+  await page.locator('[data-action="next"]').click();
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => audio.paused), false);
+  assert.match(
+    await page.locator("#session-song").innerText(),
+    /test-song.wav/,
+  );
+  await page.locator('[data-action="end-session"]').click();
+  assert.equal(await page.evaluate(() => audio.paused), true);
+  await page.locator('[data-action="save-partial"]').click();
+  // Check the layout at narrow width.
+  await page.setViewportSize({ width: 320, height: 740 });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
+  await page.screenshot({ path: "output/narrow-screen.png", fullPage: true });
+  assert.deepEqual(errors, []);
+  console.log(
+    "UI passed: SVG guides pause timers/music and resume explicitly; plan, nutrition persistence, workout/rest/resume, 21-round completion, history, audio play/pause/resume, narrow layout; no JS errors.",
+  );
+  await browser.close();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
